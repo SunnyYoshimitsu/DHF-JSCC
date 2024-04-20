@@ -6,7 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from PIL import Image
 import torch_msssim
-import model_d_fusion2
+import hyperfusion_mask
 import math
 import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
@@ -111,7 +111,7 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False)
 TRAINING = True
 M = 256
 N2 = 40
-image_comp = model_d_fusion2.Image_coding(M=M, N2=N2).cuda()
+image_comp = hyperfusion_mask.Image_coding(M=M, N2=N2).cuda()
 #image_comp = torch.load('ae_4999_57.42413_0.00000000.pkl')
 
 METRIC = "PSNR"
