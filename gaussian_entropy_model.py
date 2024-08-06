@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from modules import ops
+import ops
 
 
 class Distribution_for_entropy(nn.Module):
@@ -15,13 +15,14 @@ class Distribution_for_entropy2(nn.Module):
         super(Distribution_for_entropy2,self).__init__()
 
     def forward(self, x, p_dec, quan_step = 1.):
+
         mean = p_dec[:, 0:20, :, :]
         scale = p_dec[:, 20:40, :, :]
         ## to make the scale always positive
         # scale[scale == 0] = 1e-9
         scale = ops.Low_bound.apply(torch.abs(scale), 1e-9)
         #scale1 = torch.clamp(scale1,min = 1e-9)
-        m1 = torch.distributions.normal.Normal(mean, scale)
+        m1 = torch.distributions.normal.Normal(mean,scale)
         lower = m1.cdf(x - 0.5 * quan_step)
         upper = m1.cdf(x + 0.5 * quan_step)
 
@@ -29,4 +30,3 @@ class Distribution_for_entropy2(nn.Module):
 
         likelihood = ops.Low_bound.apply(likelihood, 1e-6)
         return likelihood
-

@@ -19,7 +19,10 @@ class Channel(nn.Module):
 
     def forward(self, input, avg_pwr=None, power=1):
         if avg_pwr is None:
-            avg_pwr = torch.mean(input ** 2)
+            zero_num = np.sum((input == 0).cpu().numpy())
+            b,h,w,c = input.size()
+            avg_pwr = torch.sum(input ** 2) / (b*h*w*c - zero_num)
+            #avg_pwr = torch.mean(input ** 2)
             channel_tx = np.sqrt(power) * input / torch.sqrt(avg_pwr * 2)
         else:
             channel_tx = np.sqrt(power) * input / torch.sqrt(avg_pwr * 2)
@@ -43,7 +46,7 @@ class Channel(nn.Module):
         elif self.chan_type == 1 or self.chan_type == 'awgn':
             channel_tx = channel_in
             # 信道输入符号为复数形式，因此信道噪声标准差需乘根号0.5
-            sigma = np.sqrt(1.0 / (2 * 10 ** (self.chan_param / 10)))
+            sigma = np.sqrt(1.0 / (2 * 10 ** ((self.chan_param) / 10)))
             chan_output = self.gaussian_noise_layer(channel_tx,
                                                     std=sigma)
             return chan_output
