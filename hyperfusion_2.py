@@ -4,8 +4,6 @@ import torch.nn as nn
 import numpy as np
 import entropy_model
 from conditional_entropy_model import ConditionalEntropyBottleneck
-from basic_module import ResBlock, Non_local_Block
-from fast_context_model import Context4
 from ops import GDN
 import math
 from channel import Channel
