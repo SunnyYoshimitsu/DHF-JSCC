@@ -3,10 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import numpy as np
-from factorized_entropy_model import Entropy_bottleneck
 from gaussian_entropy_model import Distribution_for_entropy2
-from basic_module import ResBlock, Non_local_Block
-from fast_context_model import Context4
 from balle2017 import gdn
 from channel import Channel
 
@@ -458,12 +455,6 @@ class Image_coding(nn.Module):
         self.encoder_r = Enc(num_features, self.M1, self.M, self.N2)
         self.decoder = Dec(num_features, self.M, self.N2)
         self.fusion = SCAM(self.M1)
-        #self.factorized_entropy_func = Entropy_bottleneck(N2)
-        #self.hyper_enc = Hyper_Enc(N2, M)
-        #self.hyper_dec = Hyper_Dec(N2, M)
-        #self.gaussin_entropy_func = Distribution_for_entropy2()
-        #self.fc1 = nn.Linear(self.M * self.M2 * self.M2, 3000)
-        #self.fc2 = nn.Linear(3000, self.M * self.M2 * self.M2)
         self.channel = Channel(5)
 
     def add_noise(self, x):
