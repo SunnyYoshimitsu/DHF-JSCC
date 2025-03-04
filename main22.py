@@ -127,11 +127,6 @@ def main(config):
     test_loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=False, num_workers=3)
 
     # Model initialization
-    '''
-    We provide the option of two baseline models.
-    1) The Balle2017 model (bls17).
-    2) The Balle2018 model (bmshj18), which uses scale hyperpriors.
-    '''
     with_side_info = config['use_side_info']
     model_class = None
     #model = model_d_fusion2.Image_coding(M=256, N2=25)
