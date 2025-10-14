@@ -1,0 +1,33 @@
+# Inference configuration - to test trained model
+# Dataset parameters
+dataset_name: 'KITTI'
+dataset_path: '.'
+resize: [128, 128]
+
+# Model parameters
+baseline_model: 'bls17'
+use_side_info: True
+num_filters: 256
+cuda: True
+load_weight: True
+weight_path: './checkpoints/10_08/pth/epoch_1763_psnr_26.83dB.pth'  # Best checkpoint from training
+
+# Training parameters (disabled for inference)
+train: False
+epochs: 1
+train_batch_size: 1
+lr: 0.0001
+lambda: 0.00003
+alpha: 1
+beta: 1
+distortion_loss: 'MSE'
+verbose_period: 1
+
+# Saving results parameters
+save_weights: False
+save_output_path: './inference_results'
+experiment_name: 'inference_epoch1763_best'
+
+# Test parameters (enabled for inference)
+test: True
+save_image: True

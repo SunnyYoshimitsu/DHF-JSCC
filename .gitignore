@@ -1,0 +1,46 @@
+# Checkpoints and model weights
+checkpoints/
+*.pth
+*.pkl
+
+# Training outputs
+outputs/
+inference_results/
+
+# Datasets
+dataset/data_scene_flow_multiview/
+dataset/downloads/
+dataset/testing/
+dataset/training/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Logs
+*.log
+nohup.out
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
