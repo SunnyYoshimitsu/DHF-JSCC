@@ -14,10 +14,10 @@ load_weight: False
 weight_path: './pretrained_weights/ours+balle17_MS-SSIM_lambda3e-05.pt' # weight path for loading
 
 # Training parameters
-train: False
-epochs: 50000
+train: True
+epochs: 30000
 train_batch_size: 12
-lr: 0.0001
+lr: 0.0001  #etha
 lambda: 0.00003 # the lambda value in rate-distortion equation
 alpha: 1
 beta: 1

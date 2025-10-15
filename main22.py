@@ -129,15 +129,40 @@ def main(config):
     # Model initialization
     with_side_info = config['use_side_info']
     model_class = None
-    #model = model_d_fusion2.Image_coding(M=256, N2=25)
-    model = torch.load('_27.18951.pkl')
+    
+    # Initialize model architecture first
+    model = model_d_fusion2.Image_coding(M=256, N2=25)
+    
+    # Check if pretrained weights exist and load them
+    pretrained_path = 'models/KITTI_MSE_lambda3e-05_20251006_225351/checkpoints/epoch_0080_psnr_24.99dB.pth'
+    if os.path.exists(pretrained_path):
+        print(f"Loading pretrained weights from {pretrained_path}")
+        checkpoint = torch.load(pretrained_path, weights_only=False, map_location='cpu')
+        model.load_state_dict(checkpoint['model_state_dict'])
+        print(f"Loaded model from epoch {checkpoint.get('epoch', 'unknown')} with PSNR {checkpoint.get('psnr', 'unknown'):.2f}dB")
+    else:
+        print("No pretrained model found, using freshly initialized model")
+    
     model = model.cuda() if config['cuda'] else model
+    
+    # Multi-GPU support with DataParallel
+    if config['cuda'] and torch.cuda.device_count() > 1:
+        print(f"Using {torch.cuda.device_count()} GPUs with DataParallel")
+        model = torch.nn.DataParallel(model)
+    elif config['cuda']:
+        print(f"Using 1 GPU")
+    
     optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'], amsgrad=True)
     if config['load_weight']:
-        checkpoint = torch.load(config['weight_path'], map_location=torch.device('cuda' if config['cuda'] else 'cpu'))
+        checkpoint = torch.load(config['weight_path'], map_location=torch.device('cuda' if config['cuda'] else 'cpu'), weights_only=False)
         if config['baseline_model'] == 'bls17' and with_side_info:
             checkpoint['model_state_dict'] = map_layers(checkpoint['model_state_dict'])
-        model.load_state_dict(checkpoint['model_state_dict'])
+        
+        # Load state dict into the appropriate model (unwrap DataParallel if needed)
+        if isinstance(model, torch.nn.DataParallel):
+            model.module.load_state_dict(checkpoint['model_state_dict'])
+        else:
+            model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10, min_lr=1e-7)
@@ -273,21 +298,40 @@ def main(config):
             # Save weights
             if config['save_weights']:
                 if min_val_loss is None or min_val_loss > val_loss_to_track:
-                    # k = out_l[0]
-                    # k = torch.permute(k, (1, 2, 0))
-                    # k = k.detach().cpu().numpy()
-                    # k = np.clip(k, 0, 1)
-                    # plt.figure()
-                    # plt.imshow(k)
-                    # plt.show()
                     min_val_loss = val_loss_to_track
-                    torch.save(model, '_%.5f.pkl' % (10 * np.log10(1 / (sum(val_mse) / (len(val_mse))))))
-                    #torch.save(model, '_%.5f.pkl' % (sum(val_distortion) / len(val_distortion)))
-                    # save_path = os.path.join(weight_folder, experiment_name + '.pt')
-                    # torch.save({
-                    #     "model_state_dict": model.state_dict(),
-                    #     "optimizer_state_dict": optimizer.state_dict(),
-                    # }, save_path)
+                    
+                    # Create organized directory structure with date
+                    import datetime
+                    date_folder = datetime.datetime.now().strftime("%m_%d")  # e.g., "10_07"
+                    pkl_dir = os.path.join('.', 'checkpoints', date_folder, 'pkl')
+                    pth_dir = os.path.join('.', 'checkpoints', date_folder, 'pth')
+                    
+                    # Create directories if they don't exist
+                    os.makedirs(pkl_dir, exist_ok=True)
+                    os.makedirs(pth_dir, exist_ok=True)
+                    
+                    # Calculate PSNR for filename
+                    psnr = 10 * np.log10(1 / (sum(val_mse) / (len(val_mse))))
+                    
+                    # Get the actual model (unwrap DataParallel if needed)
+                    model_to_save = model.module if isinstance(model, torch.nn.DataParallel) else model
+                    
+                    # Save full model as .pkl (for backup/compatibility)
+                    pkl_path = os.path.join(pkl_dir, 'epoch_%04d_psnr_%.2fdB.pkl' % (epoch + 1, psnr))
+                    torch.save(model_to_save, pkl_path)
+                    
+                    # Save state dict as .pth (recommended format)
+                    pth_path = os.path.join(pth_dir, 'epoch_%04d_psnr_%.2fdB.pth' % (epoch + 1, psnr))
+                    torch.save({
+                        'epoch': epoch + 1,
+                        'model_state_dict': model_to_save.state_dict(),
+                        'optimizer_state_dict': optimizer.state_dict(),
+                        'psnr': psnr,
+                        'loss': min_val_loss
+                    }, pth_path)
+                    
+                    print(f"✅ Saved checkpoint: {pkl_path}")
+                    print(f"✅ Saved state dict: {pth_path}")
 
     if config['test']:
         results_path = os.path.join(config['save_output_path'], 'results')
